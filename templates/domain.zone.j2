@@ -3,7 +3,7 @@
 $ORIGIN .
 $TTL 86400	                    ; 1 day
 {{ "%-30s" % item['domain'] }}  IN SOA  ns1.{{ network.domain }}. root.{{ item['domain'] }}. (
-                                {{ lookup('pipe','date +%Y%m%d%H%M%S') }} ; serial
+                                {{ lookup('pipe','date +%s') }} ; serial
                                 300            ; refresh (5 minutes)
                                 60             ; retry (1 minute)
                                 604800         ; expire (1 week)

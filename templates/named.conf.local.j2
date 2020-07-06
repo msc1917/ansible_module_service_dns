@@ -1,0 +1,25 @@
+// {{ ansible_managed }}
+//
+// Do any local configuration here
+//
+
+// Consider adding the 1918 zones here, if they are not used in your
+// organization
+//include "/etc/bind/zones.rfc1918";
+
+{% for domain in domain_files %}
+
+        zone "{{ domain['domain'] }}" IN {
+                type master;
+                file "/etc/bind/zones/{{ network.domain }}/{{ domain['domain'] }}.zone";
+                allow-update { key "{{ domain['domain'] }}."; };
+        };
+{% endfor %}
+{% for reverse_domain in reverse_domain_files %}
+
+        zone "{{ reverse_domain }}.in-addr.arpa" IN {
+                type master;
+                file "/etc/bind/zones/{{ network.domain }}/{{ reverse_domain }}.in-addr.arpa.zone";
+                allow-update { key "{{ reverse_domain }}."; };
+        };
+{% endfor %}
