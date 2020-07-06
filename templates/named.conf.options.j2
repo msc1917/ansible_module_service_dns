@@ -1,5 +1,23 @@
 // {{ ansible_managed }}
 
+{% if network['internal_nameserver']|length > 1 %}
+acl "trusted" {
+{%  for ip_address in network['internal_nameserver'] %}
+        {{ 'localhost' if (ip_address in ansible_all_ipv4_addresses) else ip_address }};
+{%  endfor %}
+        };
+{% endif %}
+
+acl localclients {
+{% for localnet in subnet %}
+{%  if subnet[localnet]["type"] == 'network' %}
+        {{ subnet[localnet]["ip_range"] }};
+{%  endif %}
+{% endfor %}
+        localhost;
+        localnets;
+        };
+
 options {
         directory "/var/cache/bind";
 
@@ -11,12 +29,33 @@ options {
         // nameservers, you probably want to use them as forwarders.
         // Uncomment the following block, and insert the addresses replacing
         // the all-0's placeholder.
+{% if network['internal_nameserver']|length > 1 %}
+
+        recursion yes;                 # enables resursive queries
+        allow-recursion {              # allows recursive queries from "trusted" clients
+             trusted;
+             localclients;
+             };
+        allow-query {
+            localclients;
+            };
+        listen-on {                    # ns1 private IP address - listen on private network only
+{%  for ip_address in network['internal_nameserver'] %}
+{%   if (ip_address in ansible_all_ipv4_addresses) %}
+             {{ ip_address }};
+{%   endif %}
+{%  endfor %}
+             };   
+        allow-transfer {               # disable zone transfers by default 
+             none;
+             };      
+{% endif %}
 
         forwarders {
 {% for ip_address in dns_ext_name_servers %}
              {{ ip_address }};
 {% endfor %}
-        };
+             };
 
         //========================================================================
         // If BIND logs error messages about the root key being expired,
@@ -24,5 +63,7 @@ options {
         //========================================================================
         dnssec-validation auto;
 
-        listen-on-v6 { any; };
-};
+        listen-on-v6 { 
+             any;
+             };
+        };

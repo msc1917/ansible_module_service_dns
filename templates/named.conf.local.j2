@@ -9,17 +9,62 @@
 
 {% for domain in domain_files %}
 
-        zone "{{ domain['domain'] }}" IN {
-                type master;
-                file "/etc/bind/zones/{{ network.domain }}/{{ domain['domain'] }}.zone";
-                allow-update { key "{{ domain['domain'] }}."; };
-        };
+        zone "{{ domain['domain'] }}" {
+{%  if (network['internal_nameserver'][0] in ansible_all_ipv4_addresses) %}
+            type master;
+{%  else %}
+            type slave;
+{%  endif %}
+            file "/etc/bind/zones/{{ network.domain }}/{{ domain['domain'] }}.zone";
+{%  if network['internal_nameserver']|length > 1 %}
+{%   if (network['internal_nameserver'][0] in ansible_all_ipv4_addresses) %}
+            allow-transfer {
+{%    for ip_address in network['internal_nameserver'] %}
+{%     if (not ip_address in ansible_all_ipv4_addresses) %}
+                {{ ip_address }};
+{%     endif %}
+{%    endfor %}
+                };
+{%   else %}
+            masters { 
+                {{ network['internal_nameserver'][0] }};
+                };
+{%   endif %}
+{%  else %}
+            allow-update {
+                key "{{ domain['domain'] }}."; 
+                };
+{%  endif %}
+            };
 {% endfor %}
+
 {% for reverse_domain in reverse_domain_files %}
 
-        zone "{{ reverse_domain }}.in-addr.arpa" IN {
-                type master;
-                file "/etc/bind/zones/{{ network.domain }}/{{ reverse_domain }}.in-addr.arpa.zone";
-                allow-update { key "{{ reverse_domain }}."; };
-        };
+        zone "{{ reverse_domain }}.in-addr.arpa" {
+{% if (network['internal_nameserver'][0] in ansible_all_ipv4_addresses) %}
+            type master;
+{% else %}
+        	type slave;
+{% endif %}
+            file "/etc/bind/zones/{{ network.domain }}/{{ reverse_domain }}.in-addr.arpa.zone";
+{%  if network['internal_nameserver']|length > 1 %}
+{%   if (network['internal_nameserver'][0] in ansible_all_ipv4_addresses) %}
+            allow-transfer {
+{%    for ip_address in network['internal_nameserver'] %}
+{%     if (not ip_address in ansible_all_ipv4_addresses) %}
+                {{ ip_address }};
+{%     endif %}
+{%    endfor %}
+                };
+{%   else %}
+            masters { 
+                {{ network['internal_nameserver'][0] }};
+                };
+{%   endif %}
+{%  else %}
+            allow-update {
+                key "{{ reverse_domain }}.";
+                };
+{%  endif %}
+            };
 {% endfor %}

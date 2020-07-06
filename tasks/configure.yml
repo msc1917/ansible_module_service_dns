@@ -11,6 +11,16 @@
     - "/etc/bind/zones"
     - "/etc/bind/zones/{{ network.domain }}"
 
+- name: Configure /etc/default/bind9
+  lineinfile:
+    path: /etc/default/bind9
+    regexp: "^OPTIONS="
+    insertafter: "^# startup options for the server"
+    line: 'OPTIONS="-4 -u bind"'
+    state: present
+  become: yes
+  notify: restart bind9-daemon
+
 - name: "Copy zone-files to host"
   copy:
     src:   "{{ inventory_dir }}/dynamic_vars/files/config/dns/zone-file/{{ item.domain }}.zone"
@@ -34,6 +44,10 @@
   with_items:
     - "{{ reverse_domain_files }}"
   notify: restart bind9-daemon
+
+- name: Gather Facts if it was not done
+  gather_facts:
+  # when: not all_ipv4_addresses exists
 
 - name: Generate /etc/bind/named.conf.local
   template:
