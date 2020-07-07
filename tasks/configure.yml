@@ -21,6 +21,11 @@
   become: yes
   notify: restart bind9-daemon
 
+- name: Gather Facts if it was not done
+  gather_facts:
+  when: 
+    - ansible_all_ipv4_addresses is undefined
+
 - name: "Copy zone-files to host"
   copy:
     src:   "{{ inventory_dir }}/dynamic_vars/files/config/dns/zone-file/{{ item.domain }}.zone"
@@ -31,7 +36,9 @@
   become:  true 
   with_items:
     - "{{ domain_files }}"
-  notify: restart bind9-daemon
+  notify: reload bind9-daemon
+  when:
+    - network['internal_nameserver'][0] in ansible_all_ipv4_addresses
 
 - name: "Copy reverse-zone-files to host"
   copy:
@@ -43,11 +50,10 @@
   become: true 
   with_items:
     - "{{ reverse_domain_files }}"
-  notify: restart bind9-daemon
+  notify: reload bind9-daemon
+  when:
+    - network['internal_nameserver'][0] in ansible_all_ipv4_addresses
 
-- name: Gather Facts if it was not done
-  gather_facts:
-  # when: not all_ipv4_addresses exists
 
 - name: Generate /etc/bind/named.conf.local
   template:

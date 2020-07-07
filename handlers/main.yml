@@ -7,3 +7,14 @@
     enabled: yes
   become: yes
   ignore_errors: yes
+
+- name: reload bind9-daemon
+  systemd:
+    name: bind9
+    daemon_reload: yes
+    state: reloaded
+    enabled: yes
+  become: yes
+  ignore_errors: yes
+  when:
+    - "{{ network['internal_nameserver'][0] }} in {{ all_ipv4_addresses }}"
