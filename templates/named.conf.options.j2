@@ -42,7 +42,9 @@ options {
         listen-on {                    # ns1 private IP address - listen on private network only
 {%  for ip_address in network['internal_nameserver'] %}
 {%   if (ip_address in ansible_all_ipv4_addresses) %}
-             {{ ip_address }};
+{%    for published_ip_address in ansible_all_ipv4_addresses %}
+             {{ published_ip_address }};
+{%    endfor %}
 {%   endif %}
 {%  endfor %}
              localhost;
