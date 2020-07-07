@@ -45,6 +45,7 @@ options {
              {{ ip_address }};
 {%   endif %}
 {%  endfor %}
+             localhost;
              };   
         allow-transfer {               # disable zone transfers by default 
              none;
@@ -52,7 +53,7 @@ options {
 {% endif %}
 
         forwarders {
-{% for ip_address in dns_ext_name_servers %}
+{% for ip_address in network['external_nameserver'] %}
              {{ ip_address }};
 {% endfor %}
              };
@@ -61,9 +62,10 @@ options {
         // If BIND logs error messages about the root key being expired,
         // you will need to update your keys.  See https://www.isc.org/bind-keys
         //========================================================================
+        dnssec-enable yes;
         dnssec-validation auto;
 
         listen-on-v6 { 
-             any;
+             none;
              };
         };
