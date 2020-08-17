@@ -17,4 +17,4 @@
   become: yes
   ignore_errors: yes
   when:
-    - "{{ network['internal_nameserver'][0] }} in {{ all_ipv4_addresses }}"
+    - network['internal_nameserver'][0] in all_ipv4_addresses
